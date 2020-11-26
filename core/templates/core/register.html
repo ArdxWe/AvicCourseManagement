@@ -1,0 +1,14 @@
+{% if messages %}
+    {{ messages }}
+{% endif %}
+
+<form method="post" action="{% url 'avic:register' %}">       
+    {% csrf_token %}    
+    <label>账号：</label>        
+    <input name="username">
+    <div></div>      
+    <label>密码：</label>        
+    <input name="password">
+    <div></div>        
+    <input type="submit" value="注册" />    
+</form>

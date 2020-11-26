@@ -1,0 +1,11 @@
+<form method="post" action="">        
+    {% csrf_token %}        
+    <label>学号：</label>        
+    <input name="username">        
+    <div></div>        
+    <label>密码：</label>        
+    <input name="password">        
+    <input type="submit" value="登录" /> 
+
+    <a href="{% url 'avic:register' %}">注册</a>
+</form>
