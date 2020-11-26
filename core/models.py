@@ -9,7 +9,10 @@ class Course(models.Model):
     semester = models.CharField(max_length=5, choices=(('1', '春'), ('2', '秋')))
 
     def __str__(self):
-        return self.course_name
+        if self.course_name:
+            return str(self.course_name)
+        else:
+            return "None"
 
 
 class Usercourse(models.Model):
@@ -17,9 +20,13 @@ class Usercourse(models.Model):
     course = models.ForeignKey(Course, on_delete=models.CASCADE)
     scores = models.IntegerField(validators=[MaxValueValidator(100),
                                              MinValueValidator(0)
-                                            ])
+                                            ], null=True)
     
+    class Meta:
+        unique_together = ['user_name', 'course']
+
     def __str__(self):
-        return self.user_name
-
-
+        if self.user_name:
+            return str(self.user_name) + ' ' + str(self.course)
+        else:
+            return "None"

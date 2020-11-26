@@ -3,7 +3,7 @@ from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.http import FileResponse, HttpResponse, HttpResponseRedirect
 from django.contrib.auth.models import User
-from .models import Usercourse
+from .models import Course, Usercourse
 
 
 def index(request):
@@ -14,7 +14,7 @@ def index(request):
         objects = Usercourse.objects.filter(user_name=request.user)
         
         for i in objects:
-            context['usercourses'].append((i.user_name.username, i.course.course_name))
+            context['usercourses'].append((i.course.course_name, i.scores))
         
         return render(request, 'core/index.html', context)
     else:
@@ -55,3 +55,38 @@ def register(request):
 def lagout(request):
     auth.logout(request)
     return HttpResponseRedirect(reverse('avic:index'))
+
+def choose(request):
+    if not request.user.is_authenticated:
+        return HttpResponseRedirect(reverse('avic:login'))
+        
+    if request.method == 'POST':
+        chosen_courses = request.POST.getlist('courses')
+        print(chosen_courses)
+        print("fucls")
+
+        for i in chosen_courses:
+            course = Course.objects.get(course_name=i)
+            user_course = Usercourse.objects.create(user_name=request.user, course=course)
+            user_course.save()
+        
+        return HttpResponseRedirect(reverse('avic:index'))
+    
+    has_chosen = set([x.course.pk for x in Usercourse.objects.filter(user_name=request.user)])
+    not_chosen = []
+    print("hah")
+    print(has_chosen)
+
+    all_courses = Course.objects.all()
+
+    for course in all_courses:
+        print(course.pk)
+        if course.pk not in has_chosen:
+            not_chosen.append(course)
+            print(not_chosen)
+    
+    context = {}
+    context['list'] = not_chosen
+
+    return render(request, "core/choose.html", context)
+

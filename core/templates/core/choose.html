@@ -1,0 +1,7 @@
+<form method="post" action="{% url 'avic:choose' %}">
+    {% csrf_token %} 
+    {% for i in list %}
+        <label><input type="checkbox" name="courses" value="{{ i }}"> {{ i }}</label>
+    {% endfor %}
+    <input type="submit" value="提交" /> 
+</form>

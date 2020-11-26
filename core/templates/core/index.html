@@ -1,8 +1,6 @@
 <body>
     <h1>{{ user }}</h1>
-    <form method="get" action="{% url 'avic:index'%}">                
-        <input type="button" value="选课"/>    
-    </form>
+    <a href="{% url 'avic:choose' %}">选课</a>
     <a href="{% url 'avic:lagout' %}">退出</a>
 
     {% for list in usercourses %}
