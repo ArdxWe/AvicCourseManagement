@@ -1,24 +1,31 @@
+from avic.settings import REGISTER_ID_FAIL
+from typing import ClassVar
 from django.contrib import auth
 from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.http import FileResponse, HttpResponse, HttpResponseRedirect
-from django.contrib.auth.models import User
-from .models import Course, Usercourse
-
+from .models import User
+from .models import Course, Usercourse, College
+from django.core.validators import validate_email
+from django.conf import settings
 
 def index(request):
+    context = {}
+
     if request.user.is_authenticated:
-        context = {}
         context['user'] = request.user.username
         context['usercourses'] = []
         objects = Usercourse.objects.filter(user_name=request.user)
         
         for i in objects:
-            context['usercourses'].append((i.course.course_name, i.scores))
-        
-        return render(request, 'core/index.html', context)
+            context['usercourses'].append((i.course.course_name,
+                                           i.course.teacher_name,
+                                           i.course.course_scores,
+                                           i.course.semester,
+                                           i.scores))
     else:
-        return HttpResponseRedirect(reverse('avic:login'))
+        context['user'] = False
+    return render(request, 'core/index.html', context)
 
 
 def login(request):
@@ -26,31 +33,58 @@ def login(request):
             username = request.POST.get('username')
             password = request.POST.get('password')
             user = auth.authenticate(username=username, password=password)
-
             if user:
                 auth.login(request, user)
                 return HttpResponseRedirect(reverse('avic:index'))
             else:
-                return render(request, 'core/login.html', {'messages': 'please relogin'})
+                return render(request, 'core/login.html', {'messages': settings.LOGIN_FAIL_MSG})
     else:
         return render(request, "core/login.html")
 
 def register(request):
+    context = {}
+
     if request.method == 'POST':
+        username = request.POST.get('username')
+        if username > settings.MAX_STUDENT_ID or username < settings.MIN_STUDENT_ID:
+            context['messages'] = REGISTER_ID_FAIL
+            context['college'] = [x.college_name for x in College.objects.all()]
+            return render(request, 'core/register.html', context)
+
+        password = request.POST.get('password')
+
+        email = request.POST.get('email')
         try:
-            username = request.POST.get('username')
-            password = request.POST.get('password')
+            validate_email(email)
+        except:
+            context['messages'] = settings.REGISTER_EMAIL_FAIL
+            context['college'] = [x.college_name for x in College.objects.all()]
+            return render(request, 'core/register.html', context)
+
+        try:
+            college = College.objects.get(college_name=request.POST.get('college'))
+        except:
+            context['messages'] = settings.REGISTER_COLLEGE_FAIL
+            context['college'] = [x.college_name for x in College.objects.all()]
+            return render(request, 'core/register.html', context)
+
+        try:
             user = User.objects.create_user(
-                username=username, password=password)
+                username=username, password=password, email=email, college=college)
             user.save()
+
             if user:
                 auth.logout(request)
                 auth.login(request, user)
-            return HttpResponseRedirect(reverse('avic:index'))
+                return HttpResponseRedirect(reverse('avic:index'))
         except:
-            return render(request, 'core/register.html', {'messages': '用户名已注册，请重新注册'})
+            context['messages'] = settings.REGISTER_NAME_FAIL
+            context['college'] = [x.college_name for x in College.objects.all()]
+            return render(request, 'core/register.html', context)
+
     else:
-        return render(request, 'core/register.html')
+        context['college'] = [x.college_name for x in College.objects.all()]
+        return render(request, 'core/register.html', context)
 
 def lagout(request):
     auth.logout(request)
@@ -61,32 +95,16 @@ def choose(request):
         return HttpResponseRedirect(reverse('avic:login'))
         
     if request.method == 'POST':
-        chosen_courses = request.POST.getlist('courses')
-        print(chosen_courses)
-        print("fucls")
+        chosen_course_name = request.POST.get('course')
+        course = Course.objects.get(course_name=chosen_course_name)
+        user_course = Usercourse.objects.create(user_name=request.user, course=course)
+        user_course.save()
 
-        for i in chosen_courses:
-            course = Course.objects.get(course_name=i)
-            user_course = Usercourse.objects.create(user_name=request.user, course=course)
-            user_course.save()
-        
-        return HttpResponseRedirect(reverse('avic:index'))
-    
     has_chosen = set([x.course.pk for x in Usercourse.objects.filter(user_name=request.user)])
     not_chosen = []
-    print("hah")
-    print(has_chosen)
-
     all_courses = Course.objects.all()
-
     for course in all_courses:
-        print(course.pk)
         if course.pk not in has_chosen:
             not_chosen.append(course)
-            print(not_chosen)
-    
-    context = {}
-    context['list'] = not_chosen
-
-    return render(request, "core/choose.html", context)
+    return render(request, "core/choose.html", {'list': not_chosen})
 

@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/3.1/ref/settings/
 """
 
 from pathlib import Path
+import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve(strict=True).parent.parent
@@ -123,3 +124,20 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/3.1/howto/static-files/
 
 STATIC_URL = '/static/'
+
+# my settings
+AUTH_USER_MODEL = 'core.User'
+
+MIN_STUDENT_ID = 'SX2002000'
+
+MAX_STUDENT_ID = 'SX2002090'
+
+LOGIN_FAIL_MSG = "学号或者密码错误， 请重新输入"
+
+REGISTER_ID_FAIL = "学号应该在" + MIN_STUDENT_ID + "和" + MAX_STUDENT_ID + "之间"
+
+REGISTER_EMAIL_FAIL = "无效的 Email"
+
+REGISTER_COLLEGE_FAIL = "未选中学院"
+
+REGISTER_NAME_FAIL = "学号已经注册"
