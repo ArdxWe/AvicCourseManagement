@@ -105,6 +105,47 @@ $
 $ python manage.py runserver
 ```
 
+## 代码片段
+
+选课
+```Python
+def choose(request):
+    if not request.user.is_authenticated:
+        return HttpResponseRedirect(reverse('avic:login'))
+
+    if request.method == 'POST':
+        chosen_course_name = request.POST.get('course')
+        course = Course.objects.get(course_name=chosen_course_name)
+        user_course = Usercourse.objects.create(
+            user_name=request.user, course=course)
+        user_course.save()
+
+    has_chosen = set(
+        [x.course.pk for x in Usercourse.objects.filter(user_name=request.user)])
+    not_chosen = []
+    all_courses = Course.objects.all()
+    for course in all_courses:
+        if course.pk not in has_chosen:
+            not_chosen.append(course)
+    return render(request, "core/choose.html", {'list': not_chosen})
+```
+
+登录
+
+```Python
+def login(request):
+    if request.method == 'POST':
+        username = request.POST.get('username')
+        password = request.POST.get('password')
+        user = auth.authenticate(username=username, password=password)
+        if user:
+            auth.login(request, user)
+            return HttpResponseRedirect(reverse('avic:index'))
+        else:
+            return render(request, 'core/login.html', {'messages': settings.LOGIN_FAIL_MSG})
+    else:
+        return render(request, "core/login.html")
+```
 ## 功能
 
 注册
