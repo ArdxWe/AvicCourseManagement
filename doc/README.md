@@ -96,6 +96,7 @@ $ conda activate avic
 $ pip install django
 $ pip install django_extensions
 $ pip install mysql
+$
 ```
 
 运行
